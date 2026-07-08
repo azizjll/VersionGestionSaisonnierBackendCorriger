@@ -14,7 +14,7 @@ public class EmailServiceImpl {
     private final JavaMailSender mailSender;
 
     // ✅ CONSTANTE (fix S1192)
-    private static final String DEFAULT_FROM_EMAIL = "campagne.saisonniers@tunisietelecom.tn";
+    private static final String DEFAULT_FROM_EMAIL = "azizchahlaoui7@gmail.com";
 
     // =========================
     // BASE EMAIL METHOD

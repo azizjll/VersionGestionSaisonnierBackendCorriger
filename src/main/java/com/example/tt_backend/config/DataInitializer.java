@@ -22,9 +22,9 @@ public class DataInitializer implements CommandLineRunner {
     private final PasswordPolicyService passwordPolicyService; // ← ajouter
 
     private static final Integer SUPERADMIN_MATRICULE = 74151;
-    private static final String  SUPERADMIN_EMAIL     = "Bassem.Abidi@tunisietelecom.tn";
-    private static final String  SUPERADMIN_NOM       = "Abidi";
-    private static final String  SUPERADMIN_PRENOM    = "Bassem";
+    private static final String  SUPERADMIN_EMAIL     = "azizchahlaoui7@gmail.com";
+    private static final String  SUPERADMIN_NOM       = "chahlaoui";
+    private static final String  SUPERADMIN_PRENOM    = "aziz";
 
     @Override
     public void run(String... args) {
