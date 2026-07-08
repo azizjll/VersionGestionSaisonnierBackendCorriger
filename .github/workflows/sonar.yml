@@ -1,0 +1,38 @@
+name: SonarQube Scan
+
+on:
+  push:
+    branches:
+      - envirommentlunix
+  pull_request:
+    branches:
+      - envirommentlunix
+
+jobs:
+  sonar:
+    runs-on: ubuntu-latest
+    env:
+      FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true   # ← ajouter
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          java-version: '17'
+          distribution: 'temurin'
+
+      - name: Build and analyze with SonarQube
+        run: |
+          mvn clean verify sonar:sonar \
+            -DskipTests \
+            -Dsonar.projectKey=azizjll_TT_BackEnd \
+            -Dsonar.organization=azizjll \
+            -Dsonar.host.url=${{ secrets.SONAR_HOST_URL }} \
+            -Dsonar.token=${{ secrets.SONAR_TOKEN }}
+        env:
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
