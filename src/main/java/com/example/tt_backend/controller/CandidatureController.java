@@ -256,7 +256,10 @@ public class CandidatureController {
             @RequestParam(required = false, defaultValue = "") String niveauEtude,
             @RequestParam(required = false, defaultValue = "") String diplome,
             @RequestParam(required = false, defaultValue = "") String specialiteDiplome,
+            @RequestParam(required = false) MultipartFile[] documents,
+            @RequestParam(required = false) List<Long> documentsToDelete,
             HttpServletRequest request) {
+
         String userEmail = getCurrentUserEmail();
         CandidatureService.UpdateCandidatureRequest req =
                 new CandidatureService.UpdateCandidatureRequest();
@@ -278,6 +281,8 @@ public class CandidatureController {
         req.niveauEtude = niveauEtude;
         req.diplome = diplome;
         req.specialiteDiplome = specialiteDiplome;
+        req.documents = documents;
+        req.documentsToDelete = documentsToDelete;
         req.userEmail = userEmail;
         req.ip = getClientIp(request);
 

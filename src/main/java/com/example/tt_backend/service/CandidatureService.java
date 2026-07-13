@@ -136,6 +136,10 @@ public class CandidatureService {
         public String specialiteDiplome;
         public String userEmail;
         public String ip;
+
+        // 🆕 gestion des documents
+        public MultipartFile[] documents;
+        public List<Long> documentsToDelete;
     }
 
     // ====================
@@ -595,6 +599,10 @@ public class CandidatureService {
         envoyerEmailChangementStatut(ancienStatut, nouveauStatut, s);
         gererChangementStructure(req, c, s);
 
+        // 🆕 Gestion des documents (suppression + ajout)
+        gererDocumentsSuppression(c, req.documentsToDelete);
+        gererDocumentsAjout(c, req.documents);
+
         Candidature saved = candidatureRepo.save(c);
 
         auditLogService.log(AuditLogService.AuditLogRequest.builder()
@@ -609,6 +617,61 @@ public class CandidatureService {
                 .build());
 
         return saved;
+    }
+    // ── helpers privés pour la gestion des documents (update) ──
+
+    private void gererDocumentsSuppression(Candidature c, List<Long> documentsToDelete) {
+        log.info("🔍 documentsToDelete reçu = {}", documentsToDelete);
+        if (documentsToDelete == null || documentsToDelete.isEmpty()) return;
+
+        for (Long docId : documentsToDelete) {
+            Document doc = documentRepo.findById(docId).orElse(null);
+
+            if (doc == null) {
+                log.warn("Document introuvable en base : docId={}", docId);
+                continue;
+            }
+
+            if (doc.getCandidature() == null || !doc.getCandidature().getId().equals(c.getId())) {
+                log.warn("Document {} n'appartient pas à la candidature {}", docId, c.getId());
+                continue;
+            }
+
+            try {
+                cloudinaryService.deleteFile(doc.getUrl());
+            } catch (Exception e) {
+                log.error("Échec suppression fichier local (docId={}) : {}", docId, e.getMessage());
+            }
+
+            // 🔑 étape critique : retirer de la collection EN MÉMOIRE du parent
+            if (c.getDocuments() != null) {
+                c.getDocuments().removeIf(d -> d.getId().equals(docId));
+            }
+
+            // 🔑 rompre le lien avant suppression (évite les soucis de cascade inverse)
+            doc.setCandidature(null);
+            documentRepo.delete(doc);
+        }
+
+        // 🔑 forcer l'écriture immédiate de la suppression avant le save(c) qui suit
+        documentRepo.flush();
+    }
+
+    private void gererDocumentsAjout(Candidature c, MultipartFile[] documents) {
+        if (documents == null || documents.length == 0) return;
+
+        for (MultipartFile file : documents) {
+            if (file == null || file.isEmpty()) continue;
+
+            try {
+                saveDoc(c, file, "AUTRE");
+            } catch (Exception e) {
+                log.error("Échec upload document (candidatureId={}, fichier={}) : {}",
+                        c.getId(), file.getOriginalFilename(), e.getMessage());
+                throw new IllegalStateException(
+                        "Erreur lors de l'upload du fichier : " + file.getOriginalFilename(), e);
+            }
+        }
     }
 
     // ── helpers privés pour updateCandidature (réduit S3776 / S6541) ──
