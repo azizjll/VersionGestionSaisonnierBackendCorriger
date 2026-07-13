@@ -580,8 +580,6 @@ public class CandidatureService {
     // ====================
     @Transactional
     public Candidature updateCandidature(UpdateCandidatureRequest req) {
-        // ✅ S107 — paramètres regroupés dans UpdateCandidatureRequest
-        // ✅ S112 + S1192
         Candidature c = candidatureRepo.findById(req.candidatureId)
                 .orElseThrow(() -> new NoSuchElementException(CANDIDATURE_INTROUVABLE));
 
@@ -596,11 +594,15 @@ public class CandidatureService {
         c.setStatut(nouveauStatut);
         c.setCommentaire(req.commentaire);
 
-        gererChangementStructure(req, c, s);                              // 🔄 déplacé avant l'email
-        envoyerEmailChangementStatut(ancienStatut, nouveauStatut, c, s);   // 🔄 nouvel appel avec c
+        // 🆕 Si refus → libérer la place, sinon gérer normalement le changement de structure
+        if (nouveauStatut == StatutCandidature.REJETEE) {
+            libererPlaceSiRefus(ancienStatut, nouveauStatut, c);
+        } else {
+            gererChangementStructure(req, c, s);
+        }
 
+        envoyerEmailChangementStatut(ancienStatut, nouveauStatut, c, s);
 
-        // 🆕 Gestion des documents (suppression + ajout)
         gererDocumentsSuppression(c, req.documentsToDelete);
         gererDocumentsAjout(c, req.documents);
 
@@ -769,6 +771,20 @@ public class CandidatureService {
     private void incrementerQuotaMois(Structure structure, String mois) {
         if ("JUILLET".equals(mois)) structure.setRecrutesJuillet(structure.getRecrutesJuillet() + 1);
         else                        structure.setRecrutesAout(structure.getRecrutesAout() + 1);
+    }
+
+    private void libererPlaceSiRefus(StatutCandidature ancien, StatutCandidature nouveau, Candidature c) {
+        // Ne rien faire si le statut ne change pas vers REJETEE, ou si c'était déjà REJETEE
+        if (nouveau != StatutCandidature.REJETEE || ancien == StatutCandidature.REJETEE) return;
+
+        Affectation affectation = affectationRepo.findByCandidatureId(c.getId()).orElse(null);
+        if (affectation == null) return;
+
+        decrementerQuotaMois(affectation.getStructure(), affectation.getMoisTravail());
+        affectationRepo.delete(affectation);
+
+        log.info("Place libérée pour candidature {} — structure {} ({})",
+                c.getId(), affectation.getStructure().getNom(), affectation.getMoisTravail());
     }
 
     // ====================
