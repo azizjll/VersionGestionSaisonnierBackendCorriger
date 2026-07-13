@@ -596,8 +596,9 @@ public class CandidatureService {
         c.setStatut(nouveauStatut);
         c.setCommentaire(req.commentaire);
 
-        envoyerEmailChangementStatut(ancienStatut, nouveauStatut, s);
-        gererChangementStructure(req, c, s);
+        gererChangementStructure(req, c, s);                              // 🔄 déplacé avant l'email
+        envoyerEmailChangementStatut(ancienStatut, nouveauStatut, c, s);   // 🔄 nouvel appel avec c
+
 
         // 🆕 Gestion des documents (suppression + ajout)
         gererDocumentsSuppression(c, req.documentsToDelete);
@@ -697,15 +698,27 @@ public class CandidatureService {
         saisonnierRepo.save(s);
     }
 
-    private void envoyerEmailChangementStatut(StatutCandidature ancien, StatutCandidature nouveau, Saisonnier s) {
+    private void envoyerEmailChangementStatut(StatutCandidature ancien, StatutCandidature nouveau, Candidature c, Saisonnier s) {
         if (ancien == nouveau) return;
         String emailS    = s.getEmail();
         String prenomNom = s.getPrenom() + " " + s.getNom();
+
         try {
             if (nouveau == StatutCandidature.ACCEPTEE) {
-                emailService.sendCandidatureAccepteeEmail(emailS, prenomNom);
+                Affectation affectation = affectationRepo.findByCandidatureId(c.getId()).orElse(null);
+
+                String direction     = s.getRegion() != null ? s.getRegion().getNom() : null;
+                String structureNom  = affectation != null && affectation.getStructure() != null
+                        ? affectation.getStructure().getNom() : null;
+                String structureType = affectation != null && affectation.getStructure() != null
+                        ? affectation.getStructure().getType().toString() : null;
+                String moisTravail   = s.getMoisTravail();
+
+                emailService.sendCandidatureAccepteeEmail(
+                        emailS, prenomNom, direction, structureNom, structureType, moisTravail);
+
             } else if (nouveau == StatutCandidature.REJETEE) {
-                emailService.sendCandidatureRefuseeEmail(emailS, prenomNom);
+                emailService.sendCandidatureRefuseeEmail(emailS, prenomNom, c.getCommentaire()); // 🆕
             }
         } catch (Exception e) {
             log.error("Échec envoi email statut candidature : {}", e.getMessage());

@@ -115,22 +115,81 @@ public class EmailServiceImpl {
     }
 
     // =========================
-    // CANDIDATURE EMAILS
-    // =========================
-    public void sendCandidatureAccepteeEmail(String to, String prenomNom) {
-        sendEmail(
-                to,
-                "✅ Candidature acceptée",
-                "Bonjour " + prenomNom + ",\n\nNous avons le plaisir de vous informer que votre candidature pour le poste de saisonnier a été acceptée.\n\nCordialement\nEquipe DDRH"
+// CANDIDATURE EMAILS
+// =========================
+    public void sendCandidatureAccepteeEmail(
+            String to,
+            String prenomNom,
+            String direction,
+            String structureNom,
+            String structureType,
+            String moisTravail
+    ) {
+        String sujet = "✅ Candidature acceptée";
+
+        String corps = """
+    Bonjour %s,
+
+    Nous avons le plaisir de vous informer que votre candidature pour le poste de saisonnier a été acceptée.
+
+    ── Détails de votre affectation ──
+    Direction : %s
+    Structure : %s
+    Type de structure : %s
+    Période de travail : %s
+
+    Nous vous contacterons prochainement pour les prochaines étapes.
+
+    Cordialement
+    Equipe DDRH
+    """.formatted(
+                prenomNom,
+                direction != null ? direction : "-",
+                structureNom != null ? structureNom : "-",
+                formatTypeStructure(structureType),
+                formatMoisTravail(moisTravail)
         );
+
+        sendEmail(to, sujet, corps);
     }
 
-    public void sendCandidatureRefuseeEmail(String to, String prenomNom) {
-        sendEmail(
-                to,
-                "❌ Candidature refusée",
-                "Bonjour " + prenomNom + ",\n\nNous vous informons que votre candidature pour le poste de saisonnier n’a malheureusement pas été retenue.\n\nCordialement\nEquipe DDRH"
+    // ── Helpers privés pour formater l'affichage ──
+    private String formatTypeStructure(String type) {
+        if (type == null) return "-";
+        return switch (type) {
+            case "ESPACE_COMMERCIAL" -> "Espace Commercial";
+            case "CENTRE_TECHNIQUE"  -> "Centre Technique";
+            case "STRUCTURE_CENTRALE" -> "Structure Centrale";
+            default -> type;
+        };
+    }
+
+    private String formatMoisTravail(String mois) {
+        if (mois == null) return "-";
+        return switch (mois) {
+            case "JUILLET" -> "Juillet";
+            case "AOUT" -> "Août";
+            case "JUILLET_AOUT" -> "Juillet et Août";
+            default -> mois;
+        };
+    }
+
+    public void sendCandidatureRefuseeEmail(String to, String prenomNom, String motifRefus) {
+        String corps = """
+    Bonjour %s,
+
+    Nous vous informons que votre candidature pour le poste de saisonnier n'a malheureusement pas été retenue.
+
+    Motif : %s
+
+    Cordialement
+    Equipe DDRH
+    """.formatted(
+                prenomNom,
+                motifRefus != null && !motifRefus.isBlank() ? motifRefus : "-"
         );
+
+        sendEmail(to, "❌ Candidature refusée", corps);
     }
 
     // =========================
