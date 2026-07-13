@@ -14,6 +14,7 @@ public class SaisonnierDTO {
     private String moisTravail;
     // ✅ S1104 — private au lieu de public (Lombok @Data génère le getter/setter)
     private Integer absences;
+    private String regionNom; // 🆕 Direction / Région
 
     public static SaisonnierDTO from(Saisonnier s, String statut) {
         SaisonnierDTO dto = new SaisonnierDTO();
@@ -26,6 +27,7 @@ public class SaisonnierDTO {
         dto.setMoisTravail(s.getMoisTravail());
         // ✅ Utiliser le setter généré par @Data au lieu d'accès direct au champ public
         dto.setAbsences(s.getAbsences() != null ? s.getAbsences() : 0);
+        dto.setRegionNom(s.getRegion() != null ? s.getRegion().getNom() : null); // 🆕
         return dto;
     }
 }
