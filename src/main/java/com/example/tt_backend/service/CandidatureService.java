@@ -201,10 +201,16 @@ public class CandidatureService {
         Structure structure = structureRepo.findById(req.structureId)
                 .orElseThrow(() -> new NoSuchElementException("Structure non trouvée"));
 
-        long nbCandidatures = affectationRepo.countByStructureIdAndCampagneId(req.structureId, req.campagneId);
+        int quotaMois = "JUILLET".equals(req.moisTravail)
+                ? structure.getAutorisesJuillet()
+                : structure.getAutorisesAout();
 
-        if (nbCandidatures >= structure.getAutorises()) {
-            throw new IllegalStateException("Quota atteint (" + structure.getAutorises() + ")");
+        long nbCandidaturesMois = affectationRepo.countByStructureIdAndCampagneIdAndMoisTravail(
+                req.structureId, req.campagneId, req.moisTravail);
+
+        if (nbCandidaturesMois >= quotaMois) {
+            throw new IllegalStateException(
+                    "Quota atteint pour " + req.moisTravail + " (" + quotaMois + ")");
         }
 
         // ── 6. Affectation ─────────────────────────────────────────
@@ -212,8 +218,15 @@ public class CandidatureService {
         affectation.setStructure(structure);
         affectation.setCampagne(c.getCampagne());
         affectation.setSaisonnier(s);
+        affectation.setCandidature(c);   // ✅ le lien qui manquait
+        affectation.setMoisTravail(req.moisTravail);
         affectation.setDateAffectation(LocalDate.now());
-        structure.setRecrutes(structure.getRecrutes() + 1);
+
+        if ("JUILLET".equals(req.moisTravail)) {
+            structure.setRecrutesJuillet(structure.getRecrutesJuillet() + 1);
+        } else {
+            structure.setRecrutesAout(structure.getRecrutesAout() + 1);
+        }
         affectationRepo.save(affectation);
 
         // ── 7. Incrémenter utilise ─────────────────────────────────
@@ -531,7 +544,7 @@ public class CandidatureService {
                 .orElseThrow(() -> new NoSuchElementException(CANDIDATURE_INTROUVABLE));
 
         Affectation affectation = affectationRepo
-                .findTopBySaisonnierIdOrderByDateAffectationDesc(c.getSaisonnier().getId())
+                .findByCandidatureId(candidatureId)
                 .orElse(null);
 
         auditLogService.log(AuditLogService.AuditLogRequest.builder()
@@ -639,32 +652,47 @@ public class CandidatureService {
     private void gererChangementStructure(UpdateCandidatureRequest req, Candidature c, Saisonnier s) {
         if (req.structureId == null) return;
 
+        // ✅ chercher par candidature, pas par saisonnier — sinon on touche
+        // l'affectation d'une AUTRE campagne du même saisonnier
         Affectation ancienne = affectationRepo
-                .findTopBySaisonnierIdOrderByDateAffectationDesc(s.getId())
+                .findByCandidatureId(c.getId())
                 .orElse(null);
 
         if (ancienne != null) {
-            Structure oldStructure = ancienne.getStructure();
-            oldStructure.setRecrutes(oldStructure.getRecrutes() - 1);
+            decrementerQuotaMois(ancienne.getStructure(), ancienne.getMoisTravail());
             affectationRepo.delete(ancienne);
         }
 
-        // ✅ S112
         Structure newStructure = structureRepo.findById(req.structureId)
                 .orElseThrow(() -> new NoSuchElementException("Structure non trouvée"));
 
-        long nb = affectationRepo.countByStructureIdAndCampagneId(req.structureId, c.getCampagne().getId());
-        if (nb >= newStructure.getAutorises()) {
-            throw new IllegalStateException("Quota atteint");
+        String mois = s.getMoisTravail();
+        int quotaMois = "JUILLET".equals(mois) ? newStructure.getAutorisesJuillet() : newStructure.getAutorisesAout();
+
+        long nb = affectationRepo.countByStructureIdAndCampagneIdAndMoisTravail(req.structureId, c.getCampagne().getId(), mois);
+        if (nb >= quotaMois) {
+            throw new IllegalStateException("Quota atteint pour " + mois);
         }
 
         Affectation newAffectation = new Affectation();
         newAffectation.setStructure(newStructure);
         newAffectation.setCampagne(c.getCampagne());
         newAffectation.setSaisonnier(s);
+        newAffectation.setCandidature(c);   // ✅ le lien qui manquait
+        newAffectation.setMoisTravail(mois);
         newAffectation.setDateAffectation(LocalDate.now());
-        newStructure.setRecrutes(newStructure.getRecrutes() + 1);
+        incrementerQuotaMois(newStructure, mois);
         affectationRepo.save(newAffectation);
+    }
+
+    private void decrementerQuotaMois(Structure structure, String mois) {
+        if ("JUILLET".equals(mois)) structure.setRecrutesJuillet(Math.max(0, structure.getRecrutesJuillet() - 1));
+        else                        structure.setRecrutesAout(Math.max(0, structure.getRecrutesAout() - 1));
+    }
+
+    private void incrementerQuotaMois(Structure structure, String mois) {
+        if ("JUILLET".equals(mois)) structure.setRecrutesJuillet(structure.getRecrutesJuillet() + 1);
+        else                        structure.setRecrutesAout(structure.getRecrutesAout() + 1);
     }
 
     // ====================

@@ -41,12 +41,12 @@ public class StructureController {
                 ? structureRepository.findByRegionIdAndCampagneId(regionId, campagneId)
                 : structureRepository.findByRegionId(regionId);
 
-        // ✅ S6204 — .toList() au lieu de collect(Collectors.toList())
         return structures.stream()
                 .map(s -> new StructureDTO(
                         s.getId(), s.getNom(), s.getType().name(),
                         s.getRegion().getNom(), s.getAdresse(),
-                        s.getAutorises(), s.getRecrutes()))
+                        s.getAutorisesJuillet(), s.getRecrutesJuillet(),
+                        s.getAutorisesAout(), s.getRecrutesAout()))
                 .toList();
     }
 
@@ -62,13 +62,13 @@ public class StructureController {
 
         s.setNom(dto.getNom());
         s.setAdresse(dto.getAdresse());
-        s.setAutorises(dto.getAutorises());
+        s.setAutorisesJuillet(dto.getAutorisesJuillet());
+        s.setAutorisesAout(dto.getAutorisesAout());
         structureRepository.save(s);
         return ResponseEntity.ok("Structure mise à jour");
     }
 
     @GetMapping("/campagne-active")
-    // ✅ S1452 — ResponseEntity<List<StructureDTO>>
     public ResponseEntity<List<StructureDTO>> getStructuresCampagneActive() {
         try {
             List<StructureDTO> structures = structureService.getStructuresCampagneActive()
@@ -76,14 +76,12 @@ public class StructureController {
                     .map(s -> new StructureDTO(
                             s.getId(), s.getNom(), s.getType().name(),
                             s.getRegion().getNom(), s.getAdresse(),
-                            s.getAutorises(), s.getRecrutes()))
-                    // ✅ S6204
+                            s.getAutorisesJuillet(), s.getRecrutesJuillet(),
+                            s.getAutorisesAout(), s.getRecrutesAout()))
                     .toList();
             return ResponseEntity.ok(structures);
         } catch (Exception e) {
-            // ✅ S106 — logger au lieu de System.out
             logger.error("=== Erreur structures : {}", e.getMessage(), e);
-            // ✅ S6863 — 500 au lieu de 200 pour une erreur serveur
             return ResponseEntity.internalServerError().build();
         }
     }
@@ -103,7 +101,6 @@ public class StructureController {
 
 
     @GetMapping("/campagne-active/publique")
-    // ✅ S1452 — ResponseEntity<List<StructureDTO>>
     public ResponseEntity<List<StructureDTO>> getStructuresCampagneActivePublique() {
         try {
             List<StructureDTO> structures = structureService
@@ -112,13 +109,12 @@ public class StructureController {
                     .map(s -> new StructureDTO(
                             s.getId(), s.getNom(), s.getType().name(),
                             s.getRegion().getNom(), s.getAdresse(),
-                            s.getAutorises(), s.getRecrutes()))
-                    // ✅ S6204
+                            s.getAutorisesJuillet(), s.getRecrutesJuillet(),
+                            s.getAutorisesAout(), s.getRecrutesAout()))
                     .toList();
             return ResponseEntity.ok(structures);
         } catch (Exception e) {
             logger.error("=== Erreur structures publiques : {}", e.getMessage(), e);
-            // ✅ S6863 — 500 au lieu de 200 pour une erreur serveur
             return ResponseEntity.internalServerError().build();
         }
     }

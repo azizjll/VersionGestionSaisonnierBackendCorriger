@@ -18,6 +18,9 @@ public class Affectation {
 
     private LocalDate dateAffectation;
 
+    private String moisTravail; // "JUILLET" ou "AOUT"
+
+
     @ManyToOne
     @JoinColumn(name = "campagne_id")
     private Campagne campagne;
@@ -29,4 +32,9 @@ public class Affectation {
     @ManyToOne
     @JoinColumn(name = "saisonnier_id")
     private Saisonnier saisonnier;
+
+    @OneToOne
+    @JoinColumn(name = "candidature_id", unique = true)
+    private Candidature candidature;
+
 }

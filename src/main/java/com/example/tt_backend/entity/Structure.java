@@ -22,11 +22,18 @@ public class Structure {
 
     private String adresse;
 
-    @Column(columnDefinition = "INT DEFAULT 3")
-    private int autorises ;
+    // ❌ on retire les anciens champs autorises / recrutes globaux
+    @Column(columnDefinition = "INT DEFAULT 0")
+    private int autorisesJuillet;
 
     @Column(columnDefinition = "INT DEFAULT 0")
-    private int recrutes;
+    private int autorisesAout;
+
+    @Column(columnDefinition = "INT DEFAULT 0")
+    private int recrutesJuillet;
+
+    @Column(columnDefinition = "INT DEFAULT 0")
+    private int recrutesAout;
 
     @ManyToOne
     @JoinColumn(name = "region_id")
@@ -51,7 +58,16 @@ public class Structure {
         this.type = type;
         this.region = region;
     }
+    // ── totaux calculés, utiles pour l'affichage global si besoin ──
+    public int getAutorisesTotal() { return autorisesJuillet + autorisesAout; }
+    public int getRecrutesTotal()  { return recrutesJuillet + recrutesAout; }
+
+    // ── Disponibilité globale : au moins un des deux mois a de la place ──
     public boolean isDisponiblePourCandidature() {
-    return this.recrutes < this.autorises;
-}
-}
+        return (recrutesJuillet < autorisesJuillet) || (recrutesAout < autorisesAout);
+    }
+
+    public boolean isDisponiblePourMois(String mois) {
+        if ("JUILLET".equals(mois)) return recrutesJuillet < autorisesJuillet;
+        return recrutesAout < autorisesAout;
+    }}

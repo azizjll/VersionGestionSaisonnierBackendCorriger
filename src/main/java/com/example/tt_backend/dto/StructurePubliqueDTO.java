@@ -6,5 +6,8 @@ public record StructurePubliqueDTO(
         String type,
         String region,
         String adresse,
-        boolean disponible
+        int autorisesJuillet,
+        int recrutesJuillet,
+        int autorisesAout,
+        int recrutesAout
 ) {}

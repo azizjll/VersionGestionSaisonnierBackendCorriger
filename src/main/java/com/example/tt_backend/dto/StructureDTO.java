@@ -7,14 +7,13 @@ public class StructureDTO {
     private String type; // EC ou CT
     private String region;
     private String adresse;
-    private Integer autorises;
-    private Integer recrutes;
+    private int autorisesJuillet;
+    private        int recrutesJuillet;
+    private        int autorisesAout;
+    private        int recrutesAout;
 
 
-    public boolean isDisponible() {
-        if (autorises == null || recrutes == null) return true;
-        return recrutes < autorises;
-    }
+
 
 
     // Constructeur vide (obligatoire pour Jackson)
@@ -22,16 +21,17 @@ public class StructureDTO {
     }
 
     // Constructeur avec paramètres
-    public StructureDTO(Long id, String nom, String type, String region, String adresse, Integer autorises, Integer recrutes) {
+    public StructureDTO(Long id, String nom, String type, String region, String adresse, int autorisesJuillet, int recrutesJuillet, int autorisesAout, int recrutesAout) {
         this.id = id;
         this.nom = nom;
         this.type = type;
         this.region = region;
         this.adresse = adresse;
-        this.autorises = autorises;
-        this.recrutes = recrutes;
+        this.autorisesJuillet = autorisesJuillet;
+        this.recrutesJuillet = recrutesJuillet;
+        this.autorisesAout = autorisesAout;
+        this.recrutesAout = recrutesAout;
     }
-
     // Getters & Setters
 
     public Long getId() {
@@ -74,19 +74,35 @@ public class StructureDTO {
         this.adresse = adresse;
     }
 
-    public Integer getAutorises() {
-        return autorises;
+    public int getAutorisesJuillet() {
+        return autorisesJuillet;
     }
 
-    public void setAutorises(Integer autorises) {
-        this.autorises = autorises;
+    public void setAutorisesJuillet(int autorisesJuillet) {
+        this.autorisesJuillet = autorisesJuillet;
     }
 
-    public Integer getRecrutes() {
-        return recrutes;
+    public int getRecrutesJuillet() {
+        return recrutesJuillet;
     }
 
-    public void setRecrutes(Integer recrutes) {
-        this.recrutes = recrutes;
+    public void setRecrutesJuillet(int recrutesJuillet) {
+        this.recrutesJuillet = recrutesJuillet;
+    }
+
+    public int getRecrutesAout() {
+        return recrutesAout;
+    }
+
+    public void setRecrutesAout(int recrutesAout) {
+        this.recrutesAout = recrutesAout;
+    }
+
+    public int getAutorisesAout() {
+        return autorisesAout;
+    }
+
+    public void setAutorisesAout(int autorisesAout) {
+        this.autorisesAout = autorisesAout;
     }
 }

@@ -7,11 +7,12 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import java.util.Optional;
 
 public interface AffectationRepository extends JpaRepository<Affectation, Long> {
-    long countByStructureIdAndCampagneId(Long structureId, Long campagneId);
+    long countByStructureIdAndCampagneIdAndMoisTravail(Long structureId, Long campagneId, String moisTravail);
 
 
     Optional<Affectation> findTopBySaisonnierIdOrderByDateAffectationDesc(Long saisonnierId);
 
 
+    Optional<Affectation> findByCandidatureId(Long candidatureId);
 
 }

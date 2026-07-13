@@ -89,7 +89,11 @@ public class ExcelCampagneParser {
 
                 String nomStructure = getCellString(row, 1);
                 String typeRaw = getCellString(row, 2);
-                int autorises = getCellInt(row, 3);
+                int autorisesTotal = getCellInt(row, 3);
+
+                int autorisesJuillet = autorisesTotal / 2;
+                int autorisesAout    = autorisesTotal - autorisesJuillet; // gère les nombres impairs (5 -> 2/3)
+
 
                 if (nomStructure.isBlank()) {
                     continue;
@@ -97,8 +101,10 @@ public class ExcelCampagneParser {
 
                 Structure s = new Structure();
                 s.setNom(nomStructure);
-                s.setAutorises(autorises);
-                s.setRecrutes(0);
+                s.setAutorisesJuillet(autorisesJuillet);
+                s.setAutorisesAout(autorisesAout);
+                s.setRecrutesJuillet(0);
+                s.setRecrutesAout(0);
                 s.setRegion(region);
                 s.setType(parseType(typeRaw));
 

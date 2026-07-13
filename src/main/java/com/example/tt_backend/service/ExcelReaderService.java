@@ -58,7 +58,7 @@ public class ExcelReaderService {
         String structureNom = getCellString(row, 1);
 
         if (regionNom.isBlank() || structureNom.isBlank()) {
-            return; // ✔ remplace plusieurs continue
+            return;
         }
 
         Region region = regionRepository.findByNom(regionNom).orElse(null);
@@ -72,18 +72,29 @@ public class ExcelReaderService {
 
         String type = getCellString(row, 2);
         String adresse = getCellString(row, 3);
-        int autorises = getCellInt(row, 4);
-        int recrutes = getCellInt(row, 5);
+        int autorisesTotal = getCellInt(row, 4);
+        // ✅ colonne "recrutes" (col 5) ignorée à l'import : on ne réinjecte pas
+        //    de recrutés existants depuis Excel, ça viendrait fausser les compteurs.
 
         Structure structure = structureRepository
                 .findByNomAndRegion(structureNom, region)
                 .orElse(new Structure());
 
+        int autorisesJuillet = autorisesTotal / 2;
+        int autorisesAout    = autorisesTotal - autorisesJuillet;
+
         structure.setNom(structureNom);
         structure.setAdresse(adresse);
         structure.setRegion(region);
-        structure.setAutorises(autorises);
-        structure.setRecrutes(recrutes);
+        structure.setAutorisesJuillet(autorisesJuillet);
+        structure.setAutorisesAout(autorisesAout);
+
+        // ⚠️ Ne pas écraser recrutesJuillet/recrutesAout si la structure existe déjà,
+        // sinon tu perds le suivi des candidatures déjà affectées.
+        if (structure.getId() == null) {
+            structure.setRecrutesJuillet(0);
+            structure.setRecrutesAout(0);
+        }
 
         applyType(structure, type, structureNom);
 

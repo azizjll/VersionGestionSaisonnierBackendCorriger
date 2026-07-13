@@ -9,18 +9,18 @@ import java.time.LocalDate;
 import java.util.NoSuchElementException;
 
 @Service
-@RequiredArgsConstructor // ✅ S6813 — remplace les @Autowired sur les champs
+@RequiredArgsConstructor
 public class AffectationService {
 
     private final AffectationRepository affectationRepository;
-    private final SaisonnierRepository saisonnierRepository;
+    private final CandidatureRepository candidatureRepository;
     private final StructureRepository structureRepository;
     private final CampagneRepository campagneRepository;
 
-    public void affecterSaisonnier(Long saisonnierId, Long structureId, Long campagneId) {
+    public void affecterCandidature(Long candidatureId, Long structureId, Long campagneId) {
 
-        Saisonnier saisonnier = saisonnierRepository.findById(saisonnierId)
-                .orElseThrow(() -> new NoSuchElementException("Saisonnier introuvable"));
+        Candidature candidature = candidatureRepository.findById(candidatureId)
+                .orElseThrow(() -> new NoSuchElementException("Candidature introuvable"));
 
         Structure structure = structureRepository.findById(structureId)
                 .orElseThrow(() -> new NoSuchElementException("Structure introuvable"));
@@ -28,16 +28,22 @@ public class AffectationService {
         Campagne campagne = campagneRepository.findById(campagneId)
                 .orElseThrow(() -> new NoSuchElementException("Campagne introuvable"));
 
-        // ✅ S112 — IllegalArgumentException au lieu de RuntimeException
+        Saisonnier saisonnier = candidature.getSaisonnier();
+
         if (!saisonnier.getRegion().getId().equals(structure.getRegion().getId())) {
             throw new IllegalArgumentException("Région invalide");
         }
 
-        Affectation aff = new Affectation();
+        // ✅ upsert : une candidature = une seule affectation
+        Affectation aff = affectationRepository.findByCandidatureId(candidatureId)
+                .orElse(new Affectation());
+
+        aff.setCandidature(candidature);
         aff.setSaisonnier(saisonnier);
         aff.setStructure(structure);
         aff.setCampagne(campagne);
         aff.setDateAffectation(LocalDate.now());
+        aff.setMoisTravail(saisonnier.getMoisTravail());
 
         affectationRepository.save(aff);
     }

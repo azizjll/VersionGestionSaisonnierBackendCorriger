@@ -26,7 +26,6 @@ public class StructureImportController {
 
     @GetMapping
     public List<StructureDTO> getAllStructures() {
-        // ✅ S6204 — .toList() au lieu de collect(Collectors.toList())
         return structureRepository.findAll().stream()
                 .map(s -> new StructureDTO(
                         s.getId(),
@@ -34,8 +33,8 @@ public class StructureImportController {
                         s.getType() == StructureType.ESPACE_COMMERCIAL ? "EC" : "CT",
                         s.getRegion() != null ? s.getRegion().getNom() : "",
                         s.getAdresse() != null ? s.getAdresse() : "",
-                        s.getAutorises(),
-                        s.getRecrutes()))
+                        s.getAutorisesJuillet(), s.getRecrutesJuillet(),
+                        s.getAutorisesAout(), s.getRecrutesAout()))
                 .toList();
     }
 

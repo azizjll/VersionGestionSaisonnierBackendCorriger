@@ -72,7 +72,8 @@ public List<StructurePubliqueDTO> getStructuresParCodeCampagne(String code) {
                 .map(s -> new StructurePubliqueDTO(
                         s.getId(), s.getNom(), s.getType().name(),
                         s.getRegion().getNom(), s.getAdresse(),
-                        s.isDisponiblePourCandidature()))
+                        s.getAutorisesJuillet(), s.getRecrutesJuillet(),
+                        s.getAutorisesAout(), s.getRecrutesAout()))
                 .toList();
     }
 
